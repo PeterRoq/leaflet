@@ -1,60 +1,72 @@
-// globals
-let data = [
-	{
-		'title':'Osaka',
-		'lat': 34.6937,
-		'lon': 135.5023
-	},
-	{
-		'title':'Cali',
-		'lat': 3.4516,
-		'lon': -76.5320
-	},
-	{
-		'title':'Bangkok',
-		'lat': 13.7563,
-		'lon': 100.5018
-	},
-	{
-		'title':'Tokyo',
-		'lat': 35.6762,
-		'lon': 139.6503
-	},
-	{
-		'title':'LA',
-		'lat': 34.0522,
-		'lon': -118.2437
+// Global variables
+let map;
+// path to csv data
+let path = "data/dunitz.csv";
+let markers = L.featureGroup();
+
+
+
+// initialize
+$( document ).ready(function() {
+    createMap();
+	readCSV();
+});
+
+// create the map
+function createMap(){
+	map = L.map('map').setView([0,0],3);
+
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+	}).addTo(map);
+}
+
+// function to read csv data
+function readCSV(){
+	Papa.parse(path, {
+		header: true,
+		download: true,
+		complete: function(data) {
+			console.log(data);
+			
+			// map the data
+			mapCSV(data);
+
+		}
+	});
+}
+function mapCSV(data){
+
+	// circle options
+	let circleOptions = {
+		radius: 5,
+		weight: 1,
+		color: 'white',
+		fillColor: 'dodgerblue',
+		fillOpacity: 1
 	}
-]
-let myMarkers = L.featureGroup();
+
+	// loop through each entry
+	data.data.forEach(function(item,index){
+		// create a marker
+		let marker = L.circleMarker([item.latitude,item.longitude],circleOptions)
+		.on('mouseover',function(){
+			this.bindPopup(`${item.title}<br><img src="${item.thumbnail_url}">`).openPopup()
+		})
+
+		// add marker to featuregroup
+		markers.addLayer(marker)
+	})
+
+	// add featuregroup to map
+	markers.addTo(map)
+
+	// fit map to markers
+	map.fitBounds(markers.getBounds())
+}
 
 
 
-var map = L.map('map').setView([50,-118.4432], 17);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-
-
-data.forEach(function(item){
-	var marker = L.marker([item.lat,item.lon])
-		.bindPopup(item.title)
-
-	// add marker to featuregroup	
-	myMarkers.addLayer(marker);
-	
-	// add data to sidebar
-	$('.sidebar').append('<div class="sidebar-item">'+item.title+'</div>')
-
-
-
-})
-
-myMarkers.addTo(map)
-
-// zoom to the extent of all markers
-map.fitBounds(myMarkers.getBounds())
 
 
 
